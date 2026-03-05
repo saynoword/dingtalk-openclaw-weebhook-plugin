@@ -3,22 +3,21 @@
     "dingtalk-webhook": {
       "enabled": true,
       "globalWebhookPort": 3000,
+      "webhookPath": "/webhook",
       "robots": {
         "customerService": {
           "enabled": true,
-          "accessToken": "your_customer_service_access_token",
-          "name": "客服机器人",
-          "webhookPort": 3001
+          "accessToken": "dingxxxxxxxxxxxxxxxx",
+          "name": "客服机器人"
         },
         "notification": {
           "enabled": true,
-          "accessToken": "your_notification_access_token",
-          "name": "通知机器人",
-          "webhookPort": 3002
+          "accessToken": "dingyyyyyyyyyyyyyyyy",
+          "name": "通知机器人"
         },
         "assistant": {
           "enabled": true,
-          "accessToken": "your_assistant_access_token",
+          "accessToken": "dingzzzzzzzzzzzzzzzz",
           "name": "助手机器人"
         }
       }

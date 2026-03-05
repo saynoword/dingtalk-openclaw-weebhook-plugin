@@ -1,7 +1,7 @@
 {
   "name": "dingtalk-webhook-plugin",
   "version": "1.0.0",
-  "description": "基于 Webhook 的钉钉机器人消息发送和回调插件，支持多机器人配置",
+  "description": "基于 Webhook 的钉钉机器人消息发送和回调插件，支持多机器人配置和统一回调地址",
   "main": "plugin.ts",
   "author": "OpenClaw Community",
   "license": "MIT",
@@ -12,5 +12,22 @@
   },
   "engines": {
     "openclaw": ">=0.7.0"
+  },
+  "capabilities": {
+    "lifecycle": ["onInit", "onShutdown"],
+    "methods": [
+      "sendMessage",
+      "sendText",
+      "sendMarkdown",
+      "sendLink",
+      "sendActionCardSingle",
+      "sendActionCardMulti",
+      "sendFeedCard",
+      "atAll",
+      "atMobiles",
+      "atUserIds",
+      "getEnabledRobots",
+      "handleWebhookCallback"
+    ]
   }
 }
