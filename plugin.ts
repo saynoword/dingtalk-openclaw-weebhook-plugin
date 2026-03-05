@@ -91,6 +91,15 @@ interface WebhookCallback {
   data: any;
 }
 
+interface EnhancedWebhookCallback extends WebhookCallback {
+  _robotId: string;
+  _robotName: string;
+  _receivedAt: number;
+  accessToken?: string;
+  senderId?: string;
+  conversationId?: string;
+}
+
 // ==================== 插件类 ====================
 
 export class DingTalkWebhookPlugin {
@@ -278,11 +287,12 @@ export class DingTalkWebhookPlugin {
   }
 
   /**
-   * 处理 Webhook 回调
+   * 处理 Webhook 回调（增强版）
+   * 支持自动识别机器人信息
    */
   handleWebhookCallback(
     robotId: string,
-    callback: WebhookCallback
+    callback: EnhancedWebhookCallback | WebhookCallback
   ): void {
     const robotConfig = this.getRobotConfig(robotId);
     if (!robotConfig) {
@@ -290,22 +300,31 @@ export class DingTalkWebhookPlugin {
       return;
     }
 
+    const robotName = (callback as EnhancedWebhookCallback)._robotName || robotConfig.name || robotId;
+    
     console.log(
-      `收到机器人 ${robotConfig.name || robotId} 的回调:`,
+      `收到机器人 ${robotName}(${robotId}) 的回调:`,
       callback
     );
 
-    // 这里可以根据回调事件类型进行不同的处理
-    // 例如：按钮点击、消息已读等
-    switch (callback.event) {
+    // 提取回调数据
+    const callbackData = (callback as EnhancedWebhookCallback).data || callback;
+    const event = callback.event || callbackData.event;
+
+    // 根据回调事件类型进行不同的处理
+    switch (event) {
       case 'button_click':
-        this.handleButtonClick(robotId, callback.data);
+        this.handleButtonClick(robotId, callbackData);
         break;
       case 'message_read':
-        this.handleMessageRead(robotId, callback.data);
+        this.handleMessageRead(robotId, callbackData);
+        break;
+      case 'user_enter_session':
+        this.handleUserEnterSession(robotId, callbackData);
         break;
       default:
-        console.log(`未知回调事件：${callback.event}`);
+        console.log(`未知回调事件：${event}`);
+        this.handleDefaultCallback(robotId, callbackData);
     }
   }
 
@@ -322,6 +341,22 @@ export class DingTalkWebhookPlugin {
    */
   private handleMessageRead(robotId: string, data: any): void {
     console.log(`机器人 ${robotId} 消息已读:`, data);
+    // 可以在这里添加自定义处理逻辑
+  }
+
+  /**
+   * 处理用户进入会话回调
+   */
+  private handleUserEnterSession(robotId: string, data: any): void {
+    console.log(`机器人 ${robotId} 用户进入会话:`, data);
+    // 可以在这里添加自定义处理逻辑
+  }
+
+  /**
+   * 处理默认回调
+   */
+  private handleDefaultCallback(robotId: string, data: any): void {
+    console.log(`机器人 ${robotId} 收到默认回调:`, data);
     // 可以在这里添加自定义处理逻辑
   }
 }

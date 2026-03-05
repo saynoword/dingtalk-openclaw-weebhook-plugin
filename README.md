@@ -206,41 +206,90 @@ console.log('启用的机器人:', robots);
 
 ## Webhook 回调
 
-### 启动 Webhook 服务器
+### 统一回调地址
+
+所有机器人共用同一个回调地址，插件会自动识别机器人信息：
 
 ```typescript
+import createPlugin from './plugin';
 import { createWebhookServer } from './webhook-server';
 
+const config = {
+  enabled: true,
+  globalWebhookPort: 3000,
+  robots: {
+    customerService: {
+      enabled: true,
+      accessToken: 'dingxxxxxxxx',
+      name: '客服机器人',
+    },
+    notification: {
+      enabled: true,
+      accessToken: 'dingyyyyyyyy',
+      name: '通知机器人',
+    },
+  },
+};
+
+const plugin = createPlugin(config);
+
+// 创建 Webhook 服务器（传入 robots 配置用于自动识别）
 const server = createWebhookServer(3000, (robotId, data) => {
   console.log(`收到机器人 ${robotId} 的回调:`, data);
+  console.log(`机器人名称：${data._robotName}`);
+  console.log(`接收时间：${new Date(data._receivedAt).toISOString()}`);
   
-  // 处理回调逻辑
-  if (data.event === 'button_click') {
-    // 处理按钮点击
-    console.log('按钮被点击:', data.data);
+  // 根据 robotId 区分处理不同机器人的回调
+  switch (robotId) {
+    case 'customerService':
+      // 处理客服机器人回调
+      break;
+    case 'notification':
+      // 处理通知机器人回调
+      break;
   }
-});
+}, config.robots);
 ```
 
-### 回调地址格式
+### 回调地址配置
 
-- 通用回调：`http://localhost:3000/webhook/:robotId`
-- 特定事件：`http://localhost:3000/webhook/:robotId/:event`
-- 健康检查：`http://localhost:3000/health`
+| 端点 | 说明 | 示例 |
+|------|------|------|
+| `/webhook` | 统一回调地址（推荐） | `http://localhost:3000/webhook` |
+| `/webhook?robotId=xxx` | 带参数的统一回调 | `http://localhost:3000/webhook?robotId=bot1` |
+| `/webhook/:robotId` | 带机器人 ID 的回调 | `http://localhost:3000/webhook/bot1` |
+| `/health` | 健康检查 | `http://localhost:3000/health` |
 
-### 回调示例
+### 钉钉后台配置
+
+所有机器人的回调地址都配置为同一个：
+
+```
+http://你的公网 IP:3000/webhook
+```
+
+插件会根据回调数据中的 `accessToken` 自动识别是哪个机器人。
+
+### 回调数据格式
+
+插件会在原始回调数据基础上增强以下字段：
 
 ```json
-// POST http://localhost:3000/webhook/bot1
 {
   "event": "button_click",
-  "data": {
-    "userId": "user123",
-    "buttonTitle": "非常满意",
-    "timestamp": 1234567890
-  }
+  "senderId": "user123",
+  "buttonTitle": "非常满意",
+  "_robotId": "customerService",
+  "_robotName": "客服机器人",
+  "_receivedAt": 1705312800000
 }
 ```
+
+### 机器人识别逻辑
+
+1. **优先从 `accessToken` 识别** - 插件内部维护 `accessToken -> robotId` 映射
+2. **其次从 URL 参数识别** - `?robotId=xxx`
+3. **最后使用默认值** - `default`
 
 ## 环境变量
 
